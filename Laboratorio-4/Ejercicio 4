@@ -1,0 +1,72 @@
+import numpy as np
+import pandas as pd
+import sympy as sp
+from scipy.signal import tf2zpk
+
+s = sp.symbols("s")
+
+# Funciones de transferencia: numerador y denominador
+funciones = [
+    ("G1", [16, 0, 16], [1, 6, 8]),
+    ("G2", [1, 1, 3], [1, 4, 2, 2]),
+    ("G3", [1, 2], [1, 3]),
+    ("G4", [1, 0], [1, -2, -3]),
+    ("G5", [2, 4, 8], [1, 0, 8, 0, 16]),
+    ("G6", [6, 0, 1], [1, 3, 0, 1]),
+    ("G7", [1, 2, 1], [1, 2, 1, 0])
+]
+
+# Formato de raíces con tres decimales
+def formato(raices):
+    resultado = []
+
+    for r in raices:
+        real = float(np.real(r))
+        imag = float(np.imag(r))
+
+        if abs(real) < 1e-8:
+            real = 0.0
+        if abs(imag) < 1e-8:
+            imag = 0.0
+
+        if imag == 0:
+            texto = f"{real:.3f}"
+        elif real == 0:
+            texto = f"{imag:+.3f}j"
+        else:
+            texto = f"{real:.3f}{imag:+.3f}j"
+
+        resultado.append(texto)
+
+    return ", ".join(resultado) if resultado else "Ninguno"
+
+# Cálculo de polos y ceros
+resultados = []
+
+for nombre, num, den in funciones:
+
+    # Construir la función simbólica y cancelar factores
+    numerador = sp.Poly.from_list(num, gens=s).as_expr()
+    denominador = sp.Poly.from_list(den, gens=s).as_expr()
+
+    funcion = sp.cancel(numerador / denominador)
+    num_s, den_s = sp.fraction(funcion)
+
+    # Obtener coeficientes de la función simplificada
+    b = [float(c) for c in sp.Poly(num_s, s).all_coeffs()]
+    a = [float(c) for c in sp.Poly(den_s, s).all_coeffs()]
+
+    # Calcular ceros, polos y ganancia
+    ceros, polos, k = tf2zpk(b, a)
+
+    resultados.append({
+        "Función": nombre,
+        "Ceros (z)": formato(ceros),
+        "Polos (p)": formato(polos)
+    })
+
+# Crear tabla
+tabla = pd.DataFrame(resultados)
+
+# Mostrar tabla completa
+print(tabla.to_string(index=False))
