@@ -1,0 +1,21 @@
+clc, clear, close all;
+syms t s real
+H = 2*s/(s+3);
+h = 2*dirac(t) - 6*exp(-3*t)*heaviside(t);
+disp('1. Respuesta impulsiva:');
+pretty(h);
+X1 = 3/(s+2);
+Y1 = simplify(X1*H);
+y1 = ilaplace(Y1,s,t);
+disp('2.1 Salida:');
+pretty(y1);
+X2 = 6/s^4;
+Y2 = simplify(X2*H);
+y2 = ilaplace(Y2,s,t);
+disp('2.2 Salida:');
+pretty(y2);
+X3 = 3/(s+3);
+Y3 = simplify(X3*H);
+y3 = ilaplace(Y3,s,t);
+disp('2.3 Salida:');
+pretty(y3);
